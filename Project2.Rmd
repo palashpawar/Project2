@@ -1,0 +1,178 @@
+---
+title: "Project2"
+author: "Palash Pawar"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: spacelab
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 2018-2019 English Premier League Statistics
+
+### Introduction
+
+This dataset contains individual player statistics from the 2018-2019 English Premier League season, offering insights into one of the world’s top soccer leagues. The source of the dataset was [FootyStats](https://footystats.org/download-stats-csv). By analyzing metrics such as goals, assists, minutes played, and player positions, this project investigates the performance patterns of players across different roles. The goal is to identify statistical relationships that highlight the contributions of various positions and characteristics to overall team success.
+
+![https://www.skysports.com/football/news/11661/11463347/premier-league-season-preview-club-by-club-guide-to-2018-19](https://e0.365dm.com/18/07/2048x1152/skysports-premier-league-fixture_4353775.jpg?20180705104944)
+
+### Data Preparation
+
+```{r, message=FALSE}
+library(readr)
+
+soccer <- read_csv("england-premier-league-players-2018-to-2019-stats.csv")
+```
+
+I downloaded the dataset as a CSV file containing player statistics for the 2018-2019 Premier League season and imported it into R using the `read_csv()` function. I didn't run into any challenges when uploading the dataset.
+
+### Variable Descriptions
+
+```{r, echo=FALSE, message=FALSE}
+library(dplyr)
+library(knitr)
+
+variables_of_interest <- data.frame(
+  Variable = c("full_name", "goals_overall", "assists_overal", "minutes_played_overall", "position"),
+  Type = c("Character", "Numeric", "Numeric", "Numeric", "Character"),
+  Description = c(
+    "Player name",
+    "Number of goals scored by the player",
+    "Number of assists made by the player",
+    "Total minutes played in the season",
+    "Position of the player on the field"
+  )
+)
+
+kable(variables_of_interest, caption = "Variable Descriptions")
+```
+
+### Univariate Analysis 
+
+```{r, echo=FALSE}
+# Load ggplot2 for visualizations
+library(ggplot2)
+
+# Plot Goals
+ggplot(soccer, aes(x = goals_overall)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+  labs(title = "Distribution of Goals", x = "Goals", y = "Frequency") +
+  theme_minimal()
+
+# Plot Assists
+ggplot(soccer, aes(x = assists_overall)) +
+  geom_histogram(binwidth = 1, fill = "coral", color = "black") +
+  labs(title = "Distribution of Assists", x = "Assists", y = "Frequency") +
+  theme_minimal()
+
+# Plot Minutes Played
+ggplot(soccer, aes(x = minutes_played_overall)) +
+  geom_histogram(binwidth = 50, fill = "lightgreen", color = "black") +
+  labs(title = "Distribution of Minutes Played", x = "Minutes Played", y = "Frequency") +
+  theme_minimal()
+
+# Plot Position
+ggplot(soccer, aes(x = position)) +
+  geom_bar(fill = "orange", color = "black") +
+  labs(title = "Distribution of Positions", x = "Position", y = "Count") +
+  theme_minimal()
+
+```
+
+### Bivariate Analysis
+
+```{r}
+
+# Goals vs. Assists
+ggplot(soccer, aes(x = goals_overall, y = assists_overall)) +
+  geom_point(color = "darkblue") +
+  labs(title = "Goals vs Assists", x = "Goals", y = "Assists") +
+  theme_minimal()
+
+# Goals vs. Minutes Played
+ggplot(soccer, aes(x = goals_overall, y = minutes_played_overall)) +
+  geom_point(color = "purple") +
+  labs(title = "Goals vs Minutes Played", x = "Goals", y = "Minutes Played") +
+  theme_minimal()
+
+# Assists vs. Position
+ggplot(soccer, aes(x = position, y = assists_overall)) +
+  geom_boxplot(fill = "salmon") +
+  labs(title = "Assists by Position", x = "Position", y = "Assists") +
+  theme_minimal()
+
+# Goals vs. Position
+ggplot(soccer, aes(x = position, y = goals_overall)) +
+  geom_boxplot(fill = "lightblue") +
+  labs(title = "Goals by Position", x = "Position", y = "Goals") +
+  theme_minimal()
+
+```
+
+```{r}
+
+
+soccer <- soccer |>
+  mutate(goals_per_minute = goals_overall / minutes_played_overall)
+
+soccer <- soccer |>
+  mutate(assists_per_minute = assists_overall / minutes_played_overall)
+
+
+```
+
+### Multivariate Analysis
+
+```{r}
+# Scatter plot with color by Position
+ggplot(soccer, aes(x = goals_overall, y = assists_overall, color = position)) +
+  geom_point() +
+  labs(title = "Goals vs Assists by Position", x = "Goals", y = "Assists") +
+  theme_minimal()
+
+```
+
+The plot shows that `goals_overall` and `assists_overall` vary significantly by player `position`, highlighting distinct performance trends based on role. Forwards generally score the most goals, aligning with their primary responsibility in attack, while midfielders tend to lead in assists, supporting both offensive and defensive play by creating goal opportunities. Defenders and goalkeepers show lower numbers for both goals and assists, which aligns with their focus on preventing opposing teams from scoring rather than actively contributing to offensive plays.
+
+### Birth-date Formatting + Top 5 Oldest Players 
+
+```{r, message=FALSE, warning=FALSE}
+library(dplyr)
+library(lubridate)
+
+soccer$birthday_GMT <- dmy(soccer$birthday_GMT)
+
+soccer$birthday_GMT <- format(soccer$birthday_GMT, "%B %d, %Y")
+
+
+top_5_oldest <- soccer |>
+  arrange(desc(age)) |>
+  select(full_name, age) |>
+  head(5)
+
+print(top_5_oldest)
+
+```
+
+### Reproducibility Resources 
+
+Github Repository -\> <https://github.com/palashpawar/Project2>
+
+### Choice Elements
+
+I used 4 or more in-line codes when I identified the variables in the graphs. Additionally, I created two 2 variables in the dataset: goals_per_minute and assists_per_minutes. These two variables were created using the mutate function where the goals_overall and assists_overall was divided by minutes_played_overall. I also formatted the birth-date of the players from MM/DD/YYYY to Month, Day Year. Finally, I created a scatterplot of a multivariate analysis of goals vs assists based on position.
+
+### Conclusion
+
+In this analysis, several key relationships emerged among player performance metrics. We found that forwards tend to have the highest goal counts, aligning with their offensive role, while midfielders excel in assists, supporting play creation. Players with more minutes on the field generally scored more, suggesting that greater playtime positively impacts scoring potential. Additionally, position revealed some variations in scoring and assist patterns. These results largely matched expectations, affirming the typical role-based performance trends within soccer while also offering insights into how factors like nationallity and playtime might influence individual contributions.
+
+### References
+
+<https://rmarkdown.rstudio.com/lesson-4.html>
+
+<https://www.geeksforgeeks.org/multivariate-analysis-in-r/>
